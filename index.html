@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Ancwa BirthDay Room ♡ </title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/favicon.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Hidden Video Element -->
+    <video id="mainVideo" loop muted playsinline autoplay style="display:none">
+        <source src="assets/video_converted.mp4" type="video/mp4">
+    </video>
+
+    <!-- Three.js Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Debug Overlay (Hidden by default) -->
+    <div id="debug-overlay" class="hidden">
+        <video id="debugWebcam" autoplay playsinline muted></video>
+        <canvas id="debugCanvas"></canvas>
+        <div id="debug-info">
+            <span id="gesture-status">Gesture: None</span>
+            <span id="head-position">Head: (0, 0)</span>
+        </div>
+    </div>
+
+    <!-- Message Display Overlay -->
+    <div id="message-overlay" class="hidden">
+        <div id="message-container">
+            <div id="finger-indicator">
+                <span id="finger-count">0</span>
+                <span class="finger-label">jari</span>
+            </div>
+            <div id="message-text"></div>
+        </div>
+    </div>
+
+    <!-- FPS Counter -->
+    <div id="fps-counter">FPS: 0</div>
+
+    <!-- Control Panel -->
+    <div id="control-panel" class="glass-panel">
+        <h3>Controls</h3>
+
+        <div class="control-group">
+            <label for="parallax-intensity">Parallax Intensity</label>
+            <input type="range" id="parallax-intensity" min="0" max="100" value="50">
+            <span class="value-display" id="parallax-value">50</span>
+        </div>
+
+        <div class="control-group">
+            <label for="smoothing">Smoothing</label>
+            <input type="range" id="smoothing" min="0" max="100" value="70">
+            <span class="value-display" id="smoothing-value">70</span>
+        </div>
+
+        <div class="control-group">
+            <label for="grid-detail">Grid Detail</label>
+            <input type="range" id="grid-detail" min="5" max="50" value="20">
+            <span class="value-display" id="grid-value">20</span>
+        </div>
+
+        <div class="control-group checkbox">
+            <input type="checkbox" id="performance-mode">
+            <label for="performance-mode">Performance Mode</label>
+        </div>
+
+        <div class="control-group checkbox">
+            <input type="checkbox" id="debug-mode">
+            <label for="debug-mode">Debug Mode</label>
+        </div>
+
+        <div class="status-indicator">
+            <span id="tracking-status" class="status-dot"></span>
+            <span>Tracking Active</span>
+        </div>
+
+        <button id="start-video-btn" class="start-btn">▶ Start Video</button>
+    </div>
+
+    <!-- Hidden Admin Panel -->
+    <div id="admin-overlay" class="hidden">
+        <div id="admin-panel" class="glass-panel admin">
+            <div class="admin-header">
+                <h3>🔧 Admin Configuration</h3>
+                <button id="admin-close" class="close-btn">&times;</button>
+            </div>
+
+            <div class="admin-section">
+                <h4>Gesture Thresholds</h4>
+
+                <div class="control-group">
+                    <label for="thumb-threshold">Thumbs Up Sensitivity</label>
+                    <input type="range" id="thumb-threshold" min="0" max="100" value="50">
+                    <span class="value-display" id="thumb-value">50</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="palm-threshold">Open Palm Sensitivity</label>
+                    <input type="range" id="palm-threshold" min="0" max="100" value="50">
+                    <span class="value-display" id="palm-value">50</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="gesture-cooldown">Gesture Cooldown (ms)</label>
+                    <input type="number" id="gesture-cooldown" min="500" max="5000" value="1500" step="100">
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h4>Action Mapping</h4>
+
+                <div class="control-group">
+                    <label for="thumbs-action">Thumbs Up Action</label>
+                    <select id="thumbs-action">
+                        <option value="play">Play Video</option>
+                        <option value="pause">Pause Video</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="palm-action">Open Palm Action</label>
+                    <select id="palm-action">
+                        <option value="pause">Pause Video</option>
+                        <option value="play">Play Video</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h4>Video Source</h4>
+
+                <div class="control-group">
+                    <label for="video-url">Video URL</label>
+                    <input type="text" id="video-url" placeholder="Enter video URL or path">
+                </div>
+                <button id="apply-video" class="admin-btn">Apply Video</button>
+            </div>
+
+            <div class="admin-actions">
+                <button id="save-config" class="admin-btn primary">💾 Save Config</button>
+                <button id="reset-config" class="admin-btn danger">🔄 Reset to Default</button>
+            </div>
+
+            <div id="save-status" class="status-message hidden"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script type="module">
+        import { FaceDetector, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8";
+        import { GestureRecognizer } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8";
+
+        // Make MediaPipe available globally
+        window.MediaPipeVision = { FaceDetector, FilesetResolver, GestureRecognizer };
+    </script>
+    <script src="faceTracker.js" type="module"></script>
+    <script src="handGesture.js" type="module"></script>
+    <script src="renderer3D.js" type="module"></script>
+    <script src="adminSystem.js" type="module"></script>
+    <script src="app.js" type="module"></script>
+</body>
+
+</html>
