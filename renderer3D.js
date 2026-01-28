@@ -19,6 +19,7 @@ class Renderer3D {
         // Video element
         this.video = null;
         this.isVideoPlaying = false;
+        this.isVideoReady = false;  // Track if video has enough data for texture
 
         // Camera settings
         this.cameraBasePosition = { x: 0, y: 0, z: 5 };
@@ -225,16 +226,22 @@ class Renderer3D {
     }
 
     createVideoScreen() {
-        // Get video element
-        this.video = document.getElementById('mainVideo');
+        // Create a NEW video element programmatically to ensure CORS is set before src
+        this.video = document.createElement('video');
 
-        if (!this.video) {
-            console.error('Video element not found!');
-            return;
-        }
-
-        // Ensure crossOrigin is set for CORS (important for texture use)
+        // CRITICAL: Set crossOrigin BEFORE setting src (order matters for CORS!)
         this.video.crossOrigin = 'anonymous';
+
+        // Set video attributes
+        this.video.id = 'mainVideo';
+        this.video.loop = true;
+        this.video.muted = true;
+        this.video.playsInline = true;
+        this.video.preload = 'auto';
+        this.video.style.display = 'none';
+
+        // Append to document body (hidden)
+        document.body.appendChild(this.video);
 
         // Video sources to try (in order of priority)
         this.videoSources = [
@@ -245,11 +252,15 @@ class Renderer3D {
         ];
         this.currentSourceIndex = 0;
 
-        // Add comprehensive event listeners for debugging
+        // Track video ready state for safe texture updates
+        this.isVideoReady = false;
+
+        // Add comprehensive event listeners
         this.video.addEventListener('loadeddata', () => {
             console.log('✅ Video loaded successfully:', this.video.src);
             console.log('   Duration:', this.video.duration, 'seconds');
             console.log('   Size:', this.video.videoWidth, 'x', this.video.videoHeight);
+            this.isVideoReady = true;
         });
 
         this.video.addEventListener('loadedmetadata', () => {
@@ -261,6 +272,7 @@ class Renderer3D {
             console.error('❌ Video error:', error ? error.message : 'Unknown error');
             console.error('   Error code:', error ? error.code : 'N/A');
             console.error('   Current source:', this.video.src);
+            this.isVideoReady = false;
 
             // Try next source
             this.tryNextVideoSource();
@@ -272,6 +284,7 @@ class Renderer3D {
 
         this.video.addEventListener('canplaythrough', () => {
             console.log('✅ Video can play through without buffering');
+            this.isVideoReady = true;
         });
 
         this.video.addEventListener('stalled', () => {
@@ -280,17 +293,25 @@ class Renderer3D {
 
         this.video.addEventListener('waiting', () => {
             console.log('⏳ Video waiting for data...');
+            // Don't set isVideoReady to false here - video might still have current frame
         });
 
-        // Set initial source and load
-        this.setVideoSource(this.videoSources[0]);
+        this.video.addEventListener('playing', () => {
+            console.log('🎬 Video is now playing');
+            this.isVideoReady = true;
+        });
 
-        // Create video texture
+        // Set initial source and load (crossOrigin already set!)
+        this.video.src = this.videoSources[0];
+        console.log('📹 Setting video source:', this.videoSources[0]);
+        this.video.load();
+
+        // Create video texture with generateMipmaps disabled for performance
         this.videoTexture = new THREE.VideoTexture(this.video);
         this.videoTexture.minFilter = THREE.LinearFilter;
         this.videoTexture.magFilter = THREE.LinearFilter;
-        this.videoTexture.format = THREE.RGBFormat;
-        this.videoTexture.colorSpace = THREE.SRGBColorSpace;
+        this.videoTexture.format = THREE.RGBAFormat;
+        this.videoTexture.generateMipmaps = false;  // Important for video textures
 
         // Screen size (16:9 aspect ratio, smaller than back wall)
         const screenWidth = this.roomSize.width * 0.7;
@@ -482,6 +503,12 @@ class Renderer3D {
         if (this.video) {
             console.log('📹 Setting video source:', src);
 
+            // Mark as not ready while loading new source
+            this.isVideoReady = false;
+
+            // CRITICAL: Ensure crossOrigin is set before changing src
+            this.video.crossOrigin = 'anonymous';
+
             // Remove any existing source elements
             while (this.video.firstChild) {
                 this.video.removeChild(this.video.firstChild);
@@ -505,13 +532,21 @@ class Renderer3D {
         // Update particles
         this.updateParticles();
 
-        // Update video texture
-        if (this.videoTexture) {
-            this.videoTexture.needsUpdate = true;
+        // CRITICAL FIX: Only update video texture when video has enough data
+        // This prevents WebGL errors from trying to use an incomplete/tainted texture
+        if (this.videoTexture && this.video && this.isVideoReady) {
+            // Check readyState: HAVE_CURRENT_DATA (2) or higher means we have a frame
+            if (this.video.readyState >= this.video.HAVE_CURRENT_DATA) {
+                this.videoTexture.needsUpdate = true;
+            }
         }
 
-        // Render scene
-        this.renderer.render(this.scene, this.camera);
+        // Render scene (wrap in try-catch to prevent WebGL crash)
+        try {
+            this.renderer.render(this.scene, this.camera);
+        } catch (e) {
+            console.error('Render error:', e);
+        }
     }
 
     onResize() {
