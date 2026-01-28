@@ -37,11 +37,11 @@ class HandGestureTracker {
 
         // Finger count to message mapping
         this.fingerMessages = {
-            1: "Alooo ancwaa cayaang… <3",
-            2: "Iyaaaa kamu sayaang, kecayangan aku, cantiknaa aku duniaanaa akuu, masa depannaa akuu <3",
-            3: "Selamat ulang tahun ke-23 cintaakuuuu, di hari yang berbahagia ini aku mau mengajak kamu berterima kasih kepada Allah SWT karena telah memilih untuk menjadikan hari ini sebagai hari lahir kamu manusia favorite aku di dunia ini",
-            4: "Banyak banget hal hal yang sudah kita lalui di tahun kemarin, banyak suka duka dan pelajaran yang bisa di ambil dan di resapi, tapi kamu harus pastikan penilaian aku ke kamu nda akan pernah berubah dan bahkan selalu bertambah baik semenjak kita pertama ketemu sayaang, aku sangat amat bersyukur bisa bertemu dan bisa selalu membahagiakan kecayangan aku yang paling cantik ini",
-            5: "Semoga kamu selalu diberikan kesehatan yang luar biasa, baik lahir maupun batin. Semoga Allah SWT selalu menjagamu, melindungimu di setiap langkah, dan melimpahkan keberkahan dalam setiap urusanmu. Aku ingin kita terus bersama, melewati tahun-tahun berikutnya dengan penuh cinta."
+            1: "Alooo ancwaa cayaang… <3, Iyaaaa kamu sayaang, kecayangan aku, cantiknaa aku duniaanaa akuu, masa depannaa akuu <3",
+            2: "Selamat ulang tahun ke-23 cintaakuuuu, di hari yang berbahagia ini aku mau mengajak kamu berterima kasih kepada Allah SWT karena telah memilih untuk menjadikan hari ini sebagai hari lahir kamu manusia favorite aku di dunia ini",
+            3: "Banyak banget hal hal yang sudah kita lalui di tahun kemarin, banyak suka duka dan pelajaran yang bisa di ambil dan di resapi, tapi kamu harus pastikan penilaian aku ke kamu nda akan pernah berubah dan bahkan selalu bertambah baik semenjak kita pertama ketemu sayaang, aku sangat amat bersyukur bisa bertemu dan bisa selalu membahagiakan kecayangan aku yang paling cantik ini",
+            4: "Semoga kamu selalu diberikan kesehatan yang luar biasa, baik lahir maupun batin. Semoga Allah SWT selalu menjagamu, melindungimu di setiap langkah, dan melimpahkan keberkahan dalam setiap urusanmu. Aku ingin kita terus bersama, melewati tahun-tahun berikutnya dengan penuh cinta.",
+            5: ""
         };
 
         // Callbacks
