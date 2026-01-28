@@ -135,15 +135,24 @@ class HandGestureTracker {
                     this.triggerVideoAction(videoGesture);
                 }
 
-                // 2. Count extended fingers for birthday messages
-                const fingerCount = this.countExtendedFingers(this.landmarks);
-                this.currentFingerCount = fingerCount;
-
-                // Only trigger message if 1-5 fingers and cooldown passed
-                if (fingerCount >= 1 && fingerCount <= 5 && this.canTriggerMessageGesture(timestamp)) {
-                    this.currentGesture = `${fingerCount}_finger${fingerCount > 1 ? 's' : ''}`;
+                // 2. Check for Love Sign gesture (for message 5)
+                if (this.isLoveSign(this.landmarks) && this.canTriggerMessageGesture(timestamp)) {
+                    this.currentGesture = 'love_sign';
+                    this.currentFingerCount = 5;
                     this.lastGestureTime = timestamp;
-                    this.triggerFingerCountAction(fingerCount);
+                    this.triggerFingerCountAction(5);
+                }
+                // 3. Count extended fingers for birthday messages (1-4 only)
+                else {
+                    const fingerCount = this.countExtendedFingers(this.landmarks);
+                    this.currentFingerCount = fingerCount;
+
+                    // Only trigger message if 1-4 fingers and cooldown passed
+                    if (fingerCount >= 1 && fingerCount <= 4 && this.canTriggerMessageGesture(timestamp)) {
+                        this.currentGesture = `${fingerCount}_finger${fingerCount > 1 ? 's' : ''}`;
+                        this.lastGestureTime = timestamp;
+                        this.triggerFingerCountAction(fingerCount);
+                    }
                 }
 
                 // Draw debug overlay
@@ -206,6 +215,33 @@ class HandGestureTracker {
             landmarks[4].x > landmarks[3].x + threshold;
 
         return indexExtended && middleExtended && ringExtended && pinkyExtended && thumbExtended;
+    }
+
+    /**
+     * Detect "I Love You" sign 🤟
+     * Thumb, Index, and Pinky extended; Middle and Ring curled
+     * @param {Array} landmarks - Hand landmarks from MediaPipe
+     * @returns {boolean} True if Love Sign detected
+     */
+    isLoveSign(landmarks) {
+        const threshold = (100 - this.thresholds.fingerExtension) / 500;
+
+        // Thumb extended (sideways)
+        const thumbExtended = Math.abs(landmarks[4].x - landmarks[3].x) > threshold;
+
+        // Index finger extended (tip above PIP joint)
+        const indexExtended = landmarks[8].y < landmarks[6].y - threshold;
+
+        // Middle finger curled (tip below PIP joint)
+        const middleCurled = landmarks[12].y > landmarks[10].y;
+
+        // Ring finger curled (tip below PIP joint)
+        const ringCurled = landmarks[16].y > landmarks[14].y;
+
+        // Pinky extended (tip above PIP joint)
+        const pinkyExtended = landmarks[20].y < landmarks[18].y - threshold;
+
+        return thumbExtended && indexExtended && middleCurled && ringCurled && pinkyExtended;
     }
 
     /**
