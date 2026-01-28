@@ -245,10 +245,10 @@ class Renderer3D {
 
         // Video sources to try (in order of priority)
         this.videoSources = [
-            './assets/video_converted.mp4',
-            './assets/video.mp4',
-            'assets/video_converted.mp4',
-            'assets/video.mp4'
+            './assets/ancwaaabirthdayy.mp4',
+            './assets/ancwaaabirthdayy.mp4',
+            'assets/ancwaaabirthdayy.mp4',
+            'assets/ancwaaabirthdayy.mp4'
         ];
         this.currentSourceIndex = 0;
 
