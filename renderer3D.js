@@ -228,40 +228,69 @@ class Renderer3D {
         // Get video element
         this.video = document.getElementById('mainVideo');
 
-        // Explicitly set video source to ensure it's loaded
-        const videoSource = this.video.querySelector('source');
-        if (videoSource) {
-            // Set src attribute directly on video element as fallback
-            this.video.src = videoSource.src;
+        if (!this.video) {
+            console.error('Video element not found!');
+            return;
         }
 
-        // Add video event listeners for debugging
+        // Ensure crossOrigin is set for CORS (important for texture use)
+        this.video.crossOrigin = 'anonymous';
+
+        // Video sources to try (in order of priority)
+        this.videoSources = [
+            './assets/video_converted.mp4',
+            './assets/video.mp4',
+            'assets/video_converted.mp4',
+            'assets/video.mp4'
+        ];
+        this.currentSourceIndex = 0;
+
+        // Add comprehensive event listeners for debugging
         this.video.addEventListener('loadeddata', () => {
-            console.log('Video loaded successfully');
+            console.log('✅ Video loaded successfully:', this.video.src);
+            console.log('   Duration:', this.video.duration, 'seconds');
+            console.log('   Size:', this.video.videoWidth, 'x', this.video.videoHeight);
+        });
+
+        this.video.addEventListener('loadedmetadata', () => {
+            console.log('📋 Video metadata loaded');
         });
 
         this.video.addEventListener('error', (e) => {
-            console.error('Video error:', this.video.error);
-            // Try fallback to original video if converted fails
-            if (this.video.src.includes('video_converted')) {
-                console.log('Trying fallback to original video...');
-                this.video.src = 'assets/video.mp4';
-                this.video.load();
-            }
+            const error = this.video.error;
+            console.error('❌ Video error:', error ? error.message : 'Unknown error');
+            console.error('   Error code:', error ? error.code : 'N/A');
+            console.error('   Current source:', this.video.src);
+
+            // Try next source
+            this.tryNextVideoSource();
         });
 
         this.video.addEventListener('canplay', () => {
-            console.log('Video can play');
+            console.log('▶️ Video can play');
         });
 
-        // Force load video
-        this.video.load();
+        this.video.addEventListener('canplaythrough', () => {
+            console.log('✅ Video can play through without buffering');
+        });
+
+        this.video.addEventListener('stalled', () => {
+            console.warn('⚠️ Video stalled - network issue');
+        });
+
+        this.video.addEventListener('waiting', () => {
+            console.log('⏳ Video waiting for data...');
+        });
+
+        // Set initial source and load
+        this.setVideoSource(this.videoSources[0]);
 
         // Create video texture
         this.videoTexture = new THREE.VideoTexture(this.video);
         this.videoTexture.minFilter = THREE.LinearFilter;
         this.videoTexture.magFilter = THREE.LinearFilter;
         this.videoTexture.format = THREE.RGBFormat;
+        this.videoTexture.colorSpace = THREE.SRGBColorSpace;
 
         // Screen size (16:9 aspect ratio, smaller than back wall)
         const screenWidth = this.roomSize.width * 0.7;
@@ -285,6 +314,17 @@ class Renderer3D {
         this.addScreenFrame(screenWidth, screenHeight);
 
         this.scene.add(this.videoScreen);
+    }
+
+    tryNextVideoSource() {
+        this.currentSourceIndex++;
+        if (this.currentSourceIndex < this.videoSources.length) {
+            const nextSource = this.videoSources[this.currentSourceIndex];
+            console.log('🔄 Trying fallback video source:', nextSource);
+            this.setVideoSource(nextSource);
+        } else {
+            console.error('❌ All video sources failed!');
+        }
     }
 
     addScreenFrame(width, height) {
@@ -440,7 +480,17 @@ class Renderer3D {
 
     setVideoSource(src) {
         if (this.video) {
+            console.log('📹 Setting video source:', src);
+
+            // Remove any existing source elements
+            while (this.video.firstChild) {
+                this.video.removeChild(this.video.firstChild);
+            }
+
+            // Set src directly on video element
             this.video.src = src;
+
+            // Force reload
             this.video.load();
         }
     }

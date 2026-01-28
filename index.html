@@ -12,8 +12,10 @@
 
 <body>
     <!-- Hidden Video Element -->
-    <video id="mainVideo" loop muted playsinline autoplay style="display:none">
-        <source src="assets/video_converted.mp4" type="video/mp4">
+    <video id="mainVideo" crossorigin="anonymous" loop muted playsinline preload="auto" style="display:none">
+        <source src="./assets/video_converted.mp4" type="video/mp4">
+        <source src="./assets/video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
     </video>
 
     <!-- Three.js Canvas Container -->
