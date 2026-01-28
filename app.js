@@ -168,6 +168,9 @@ class App {
         this.gestureStatus = document.getElementById('gesture-status');
         this.headPositionDisplay = document.getElementById('head-position');
 
+        // Setup panel toggle functionality
+        this.setupPanelToggle();
+
         // Parallax intensity slider
         const parallaxSlider = document.getElementById('parallax-intensity');
         const parallaxValue = document.getElementById('parallax-value');
@@ -257,6 +260,26 @@ class App {
                         startVideoBtn.classList.add('playing');
                     }
                 };
+            });
+        }
+    }
+
+    setupPanelToggle() {
+        const controlPanel = document.getElementById('control-panel');
+        const closeBtn = document.getElementById('panel-close-btn');
+        const toggleBtn = document.getElementById('toggle-panel-btn');
+
+        if (closeBtn && controlPanel && toggleBtn) {
+            // Close button - hide panel
+            closeBtn.addEventListener('click', () => {
+                controlPanel.classList.add('hidden');
+                toggleBtn.classList.remove('hidden');
+            });
+
+            // Toggle button - show panel
+            toggleBtn.addEventListener('click', () => {
+                controlPanel.classList.remove('hidden');
+                toggleBtn.classList.add('hidden');
             });
         }
     }
